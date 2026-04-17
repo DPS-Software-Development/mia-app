@@ -20,24 +20,25 @@ type Column = {
   key: keyof Row
   label: string
   type: 'text' | 'number' | 'date' | 'bool'
-  // 'high' = sempre visibile anche in portrait mobile
-  // 'low'  = visibile solo in landscape mobile (tablet/desktop sempre)
-  priority: 'high' | 'low'
+  width: number
+  align?: 'left' | 'right' | 'center'
 }
 
 const COLUMNS: Column[] = [
-  { key: 'id', label: 'ID', type: 'number', priority: 'high' },
-  { key: 'nome', label: 'Nome', type: 'text', priority: 'high' },
-  { key: 'cognome', label: 'Cognome', type: 'text', priority: 'high' },
-  { key: 'email', label: 'Email', type: 'text', priority: 'low' },
-  { key: 'citta', label: 'Città', type: 'text', priority: 'high' },
-  { key: 'paese', label: 'Paese', type: 'text', priority: 'low' },
-  { key: 'eta', label: 'Età', type: 'number', priority: 'low' },
-  { key: 'ruolo', label: 'Ruolo', type: 'text', priority: 'high' },
-  { key: 'stipendio', label: 'Stipendio', type: 'number', priority: 'high' },
-  { key: 'dataAssunzione', label: 'Data Assunzione', type: 'date', priority: 'low' },
-  { key: 'attivo', label: 'Attivo', type: 'bool', priority: 'high' },
+  { key: 'id', label: 'ID', type: 'number', width: 64, align: 'right' },
+  { key: 'nome', label: 'Nome', type: 'text', width: 120 },
+  { key: 'cognome', label: 'Cognome', type: 'text', width: 140 },
+  { key: 'email', label: 'Email', type: 'text', width: 220 },
+  { key: 'citta', label: 'Città', type: 'text', width: 120 },
+  { key: 'paese', label: 'Paese', type: 'text', width: 100 },
+  { key: 'eta', label: 'Età', type: 'number', width: 72, align: 'right' },
+  { key: 'ruolo', label: 'Ruolo', type: 'text', width: 120 },
+  { key: 'stipendio', label: 'Stipendio', type: 'number', width: 120, align: 'right' },
+  { key: 'dataAssunzione', label: 'Data Assunzione', type: 'date', width: 140, align: 'right' },
+  { key: 'attivo', label: 'Attivo', type: 'bool', width: 90, align: 'center' },
 ]
+
+const STICKY_COLS = 2 // ID + Nome sempre visibili mentre scorri orizzontalmente
 
 const DATA: Row[] = [
   { id: 1, nome: 'Marco', cognome: 'Rossi', email: 'marco.rossi@example.com', citta: 'Milano', paese: 'Italia', eta: 34, ruolo: 'Developer', stipendio: 42000, dataAssunzione: '2019-03-12', attivo: true },
@@ -108,66 +109,87 @@ export default function SortableGrid() {
 
   const sortIcon = (key: keyof Row) => {
     if (!sort || sort.key !== key) return <span className="text-gray-400">↕</span>
-    return <span>{sort.dir === 'asc' ? '▲' : '▼'}</span>
+    return <span className="text-blue-600 dark:text-blue-400">{sort.dir === 'asc' ? '▲' : '▼'}</span>
   }
 
-  return (
-    <div className="w-full px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
-      <div className="mx-auto max-w-7xl">
-        <header className="mb-4 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-xl font-semibold sm:text-2xl">Griglia Ordinabile</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              {sorted.length} record · clicca sull&apos;intestazione per ordinare
-            </p>
-          </div>
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Cerca…"
-            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-900 sm:w-72"
-          />
-        </header>
+  // offset cumulativo per le colonne sticky
+  const stickyLeft = (idx: number): number =>
+    COLUMNS.slice(0, idx).reduce((acc, c) => acc + c.width, 0)
 
-        {/* Tablet & desktop: tabella scrollabile orizzontalmente */}
-        <div className="hidden rounded-lg border border-gray-200 shadow-sm dark:border-gray-800 md:block">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
-              <thead className="bg-gray-50 dark:bg-gray-900">
-                <tr>
-                  {COLUMNS.map((c) => (
-                    <th
-                      key={c.key}
-                      scope="col"
-                      className="sticky top-0 whitespace-nowrap px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300 lg:px-4 lg:py-3"
-                    >
-                      <button
-                        type="button"
-                        onClick={() => toggleSort(c.key)}
-                        className="inline-flex items-center gap-1 hover:text-blue-600 dark:hover:text-blue-400"
-                      >
-                        {c.label}
-                        {sortIcon(c.key)}
-                      </button>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 bg-white dark:divide-gray-800 dark:bg-gray-950">
-                {sorted.map((row, idx) => (
-                  <tr
-                    key={row.id}
-                    className={
-                      idx % 2 === 0
-                        ? 'bg-white dark:bg-gray-950'
-                        : 'bg-gray-50/60 dark:bg-gray-900/40'
-                    }
+  const alignClass = (a?: Column['align']) =>
+    a === 'right' ? 'text-right' : a === 'center' ? 'text-center' : 'text-left'
+
+  return (
+    <div className="flex min-h-screen w-full flex-col bg-gray-50 p-3 dark:bg-gray-950 sm:p-6">
+      <header className="mb-3 flex flex-col gap-2 sm:mb-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-lg font-semibold sm:text-xl">Griglia Ordinabile</h1>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {sorted.length} record · tocca l&apos;intestazione per ordinare · scorri orizzontalmente per le altre colonne
+          </p>
+        </div>
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Cerca…"
+          className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-900 sm:w-72"
+        />
+      </header>
+
+      <div className="grow overflow-auto rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-950">
+        <table
+          className="w-max min-w-full border-collapse text-sm"
+          style={{ tableLayout: 'fixed' }}
+        >
+          <colgroup>
+            {COLUMNS.map((c) => (
+              <col key={c.key} style={{ width: c.width }} />
+            ))}
+          </colgroup>
+          <thead>
+            <tr>
+              {COLUMNS.map((c, idx) => {
+                const isSticky = idx < STICKY_COLS
+                return (
+                  <th
+                    key={c.key}
+                    scope="col"
+                    className={`sticky top-0 z-20 border-b border-r border-gray-200 bg-gray-100 px-2 py-2 text-xs font-semibold uppercase tracking-wide text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 ${alignClass(c.align)} ${isSticky ? 'z-30' : ''}`}
+                    style={isSticky ? { left: stickyLeft(idx) } : undefined}
                   >
-                    {COLUMNS.map((c) => (
+                    <button
+                      type="button"
+                      onClick={() => toggleSort(c.key)}
+                      className={`inline-flex w-full items-center gap-1 hover:text-blue-600 dark:hover:text-blue-400 ${
+                        c.align === 'right'
+                          ? 'justify-end'
+                          : c.align === 'center'
+                            ? 'justify-center'
+                            : 'justify-start'
+                      }`}
+                    >
+                      <span className="truncate">{c.label}</span>
+                      {sortIcon(c.key)}
+                    </button>
+                  </th>
+                )
+              })}
+            </tr>
+          </thead>
+          <tbody>
+            {sorted.map((row, rIdx) => {
+              const zebra = rIdx % 2 === 0 ? 'bg-white dark:bg-gray-950' : 'bg-gray-50 dark:bg-gray-900/40'
+              return (
+                <tr key={row.id} className={zebra}>
+                  {COLUMNS.map((c, cIdx) => {
+                    const isSticky = cIdx < STICKY_COLS
+                    return (
                       <td
                         key={c.key}
-                        className="whitespace-nowrap px-3 py-2 text-sm text-gray-800 dark:text-gray-200 lg:px-4 lg:py-3"
+                        className={`truncate border-b border-r border-gray-100 px-2 py-1.5 dark:border-gray-800 ${alignClass(c.align)} ${isSticky ? `sticky z-10 ${zebra}` : ''}`}
+                        style={isSticky ? { left: stickyLeft(cIdx) } : undefined}
+                        title={String(row[c.key])}
                       >
                         {c.type === 'bool' ? (
                           <span
@@ -183,106 +205,23 @@ export default function SortableGrid() {
                           formatValue(row, c.key, c.type)
                         )}
                       </td>
-                    ))}
-                  </tr>
-                ))}
-                {sorted.length === 0 && (
-                  <tr>
-                    <td
-                      colSpan={COLUMNS.length}
-                      className="px-4 py-8 text-center text-sm text-gray-500"
-                    >
-                      Nessun risultato
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Mobile: selettore di ordinamento + card */}
-        <div className="md:hidden">
-          <div className="mb-3 flex flex-wrap items-center gap-2">
-            <label className="text-xs text-gray-500" htmlFor="sort-key">
-              Ordina per
-            </label>
-            <select
-              id="sort-key"
-              value={sort?.key ?? ''}
-              onChange={(e) =>
-                setSort(
-                  e.target.value
-                    ? { key: e.target.value as keyof Row, dir: sort?.dir ?? 'asc' }
-                    : null,
-                )
-              }
-              className="rounded-md border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-900"
-            >
-              <option value="">—</option>
-              {COLUMNS.map((c) => (
-                <option key={c.key} value={c.key}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              disabled={!sort}
-              onClick={() =>
-                sort && setSort({ key: sort.key, dir: sort.dir === 'asc' ? 'desc' : 'asc' })
-              }
-              className="rounded-md border border-gray-300 bg-white px-2 py-1 text-sm disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900"
-            >
-              {sort?.dir === 'desc' ? '▼ Desc' : '▲ Asc'}
-            </button>
-          </div>
-
-          <ul className="space-y-3">
-            {sorted.map((row) => (
-              <li
-                key={row.id}
-                className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-800 dark:bg-gray-950"
-              >
-                <div className="mb-2 flex items-baseline justify-between">
-                  <span className="text-sm font-semibold">
-                    #{row.id} · {row.nome} {row.cognome}
-                  </span>
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      row.attivo
-                        ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
-                        : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
-                    }`}
-                  >
-                    {row.attivo ? 'Attivo' : 'Inattivo'}
-                  </span>
-                </div>
-                <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs landscape:grid-cols-3">
-                  {COLUMNS.filter((c) => !['id', 'nome', 'cognome', 'attivo'].includes(c.key as string)).map((c) => (
-                    <div
-                      key={c.key}
-                      className={`min-w-0 ${c.priority === 'low' ? 'hidden landscape:block' : ''}`}
-                    >
-                      <dt className="truncate text-gray-500">{c.label}</dt>
-                      <dd className="truncate text-gray-900 dark:text-gray-100">
-                        {formatValue(row, c.key, c.type)}
-                      </dd>
-                    </div>
-                  ))}
-                </dl>
-                <p className="mt-2 text-[11px] text-gray-400 landscape:hidden">
-                  Ruota il telefono per vedere tutti i campi
-                </p>
-              </li>
-            ))}
+                    )
+                  })}
+                </tr>
+              )
+            })}
             {sorted.length === 0 && (
-              <li className="rounded-lg border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500 dark:border-gray-700">
-                Nessun risultato
-              </li>
+              <tr>
+                <td
+                  colSpan={COLUMNS.length}
+                  className="px-4 py-10 text-center text-sm text-gray-500"
+                >
+                  Nessun risultato
+                </td>
+              </tr>
             )}
-          </ul>
-        </div>
+          </tbody>
+        </table>
       </div>
     </div>
   )
