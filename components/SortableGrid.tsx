@@ -16,18 +16,27 @@ type Row = {
   attivo: boolean
 }
 
-const COLUMNS: { key: keyof Row; label: string; type: 'text' | 'number' | 'date' | 'bool' }[] = [
-  { key: 'id', label: 'ID', type: 'number' },
-  { key: 'nome', label: 'Nome', type: 'text' },
-  { key: 'cognome', label: 'Cognome', type: 'text' },
-  { key: 'email', label: 'Email', type: 'text' },
-  { key: 'citta', label: 'Città', type: 'text' },
-  { key: 'paese', label: 'Paese', type: 'text' },
-  { key: 'eta', label: 'Età', type: 'number' },
-  { key: 'ruolo', label: 'Ruolo', type: 'text' },
-  { key: 'stipendio', label: 'Stipendio', type: 'number' },
-  { key: 'dataAssunzione', label: 'Data Assunzione', type: 'date' },
-  { key: 'attivo', label: 'Attivo', type: 'bool' },
+type Column = {
+  key: keyof Row
+  label: string
+  type: 'text' | 'number' | 'date' | 'bool'
+  // 'high' = sempre visibile anche in portrait mobile
+  // 'low'  = visibile solo in landscape mobile (tablet/desktop sempre)
+  priority: 'high' | 'low'
+}
+
+const COLUMNS: Column[] = [
+  { key: 'id', label: 'ID', type: 'number', priority: 'high' },
+  { key: 'nome', label: 'Nome', type: 'text', priority: 'high' },
+  { key: 'cognome', label: 'Cognome', type: 'text', priority: 'high' },
+  { key: 'email', label: 'Email', type: 'text', priority: 'low' },
+  { key: 'citta', label: 'Città', type: 'text', priority: 'high' },
+  { key: 'paese', label: 'Paese', type: 'text', priority: 'low' },
+  { key: 'eta', label: 'Età', type: 'number', priority: 'low' },
+  { key: 'ruolo', label: 'Ruolo', type: 'text', priority: 'high' },
+  { key: 'stipendio', label: 'Stipendio', type: 'number', priority: 'high' },
+  { key: 'dataAssunzione', label: 'Data Assunzione', type: 'date', priority: 'low' },
+  { key: 'attivo', label: 'Attivo', type: 'bool', priority: 'high' },
 ]
 
 const DATA: Row[] = [
@@ -251,7 +260,10 @@ export default function SortableGrid() {
                 </div>
                 <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs landscape:grid-cols-3">
                   {COLUMNS.filter((c) => !['id', 'nome', 'cognome', 'attivo'].includes(c.key as string)).map((c) => (
-                    <div key={c.key} className="min-w-0">
+                    <div
+                      key={c.key}
+                      className={`min-w-0 ${c.priority === 'low' ? 'hidden landscape:block' : ''}`}
+                    >
                       <dt className="truncate text-gray-500">{c.label}</dt>
                       <dd className="truncate text-gray-900 dark:text-gray-100">
                         {formatValue(row, c.key, c.type)}
@@ -259,6 +271,9 @@ export default function SortableGrid() {
                     </div>
                   ))}
                 </dl>
+                <p className="mt-2 text-[11px] text-gray-400 landscape:hidden">
+                  Ruota il telefono per vedere tutti i campi
+                </p>
               </li>
             ))}
             {sorted.length === 0 && (
