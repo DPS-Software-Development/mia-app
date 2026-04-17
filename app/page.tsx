@@ -1,5 +1,5 @@
-import SpaceInvaders from '@/components/SpaceInvaders'
+import SortableGrid from '@/components/SortableGrid'
 
 export default function Home() {
-  return <SpaceInvaders />
+  return <SortableGrid />
 }
