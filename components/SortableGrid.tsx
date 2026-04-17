@@ -130,8 +130,8 @@ export default function SortableGrid() {
           />
         </header>
 
-        {/* Tablet & desktop: tabella scrollabile orizzontalmente */}
-        <div className="hidden rounded-lg border border-gray-200 shadow-sm dark:border-gray-800 md:block">
+        {/* Tablet landscape & desktop: tabella scrollabile orizzontalmente */}
+        <div className="hidden rounded-lg border border-gray-200 shadow-sm dark:border-gray-800 lg:block">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
               <thead className="bg-gray-50 dark:bg-gray-900">
@@ -201,8 +201,8 @@ export default function SortableGrid() {
           </div>
         </div>
 
-        {/* Mobile: selettore di ordinamento + card */}
-        <div className="md:hidden">
+        {/* Mobile (portrait + landscape) e tablet portrait: selettore di ordinamento + card */}
+        <div className="lg:hidden">
           <div className="mb-3 flex flex-wrap items-center gap-2">
             <label className="text-xs text-gray-500" htmlFor="sort-key">
               Ordina per
@@ -258,11 +258,11 @@ export default function SortableGrid() {
                     {row.attivo ? 'Attivo' : 'Inattivo'}
                   </span>
                 </div>
-                <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs landscape:grid-cols-3">
+                <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs landscape:grid-cols-4 sm:grid-cols-3 sm:landscape:grid-cols-4 md:grid-cols-4">
                   {COLUMNS.filter((c) => !['id', 'nome', 'cognome', 'attivo'].includes(c.key as string)).map((c) => (
                     <div
                       key={c.key}
-                      className={`min-w-0 ${c.priority === 'low' ? 'hidden landscape:block' : ''}`}
+                      className={`min-w-0 ${c.priority === 'low' ? 'hidden landscape:block sm:block' : ''}`}
                     >
                       <dt className="truncate text-gray-500">{c.label}</dt>
                       <dd className="truncate text-gray-900 dark:text-gray-100">
@@ -271,7 +271,7 @@ export default function SortableGrid() {
                     </div>
                   ))}
                 </dl>
-                <p className="mt-2 text-[11px] text-gray-400 landscape:hidden">
+                <p className="mt-2 text-[11px] text-gray-400 landscape:hidden sm:hidden">
                   Ruota il telefono per vedere tutti i campi
                 </p>
               </li>
