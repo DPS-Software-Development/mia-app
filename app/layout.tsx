@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Griglia Ordinabile Responsive",
-  description: "Griglia responsive con 10 campi ordinabili",
+  title: "Instagram Splitter",
+  description: "Taglia un'immagine in pannelli pronti per un carosello Instagram",
 };
 
 export const viewport = {

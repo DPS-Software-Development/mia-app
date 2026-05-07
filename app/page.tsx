@@ -1,5 +1,5 @@
-import SortableGrid from '@/components/SortableGrid'
+import InstagramSplitter from '@/components/InstagramSplitter'
 
 export default function Home() {
-  return <SortableGrid />
+  return <InstagramSplitter />
 }
